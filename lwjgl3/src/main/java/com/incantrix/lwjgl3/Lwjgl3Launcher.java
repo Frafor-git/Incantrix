@@ -2,7 +2,7 @@ package com.incantrix.lwjgl3;
 
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
-import com.incantrix.app.GameApp;
+import com.incantrix.app.client.GameApp;
 
 /** Launches the desktop (LWJGL3) application. */
 public class Lwjgl3Launcher {

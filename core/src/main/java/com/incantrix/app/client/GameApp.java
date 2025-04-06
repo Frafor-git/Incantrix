@@ -1,4 +1,4 @@
-package com.incantrix.app;
+package com.incantrix.app.client;
 
 import com.badlogic.gdx.Game;
 

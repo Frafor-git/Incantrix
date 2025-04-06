@@ -1,4 +1,4 @@
-package com.incantrix.app.utils;
+package com.incantrix.core.utils;
 
 import com.badlogic.gdx.Gdx;
 
