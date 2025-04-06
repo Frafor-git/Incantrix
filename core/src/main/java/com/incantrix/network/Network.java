@@ -8,6 +8,7 @@ public class Network {
     public static final int PORT = 54555;
     public static final float TICK_RATE = 120f;
     public static final float TICK_INTERVAL = 1f / TICK_RATE;
+    public static final int MESSAGE_SIZE = 10;
 
     public static class RegisterName {
         public String name;
@@ -25,10 +26,22 @@ public class Network {
         public double angle;
     }
 
+    public static class UseAbility {
+        public long casterId;
+        public long abilityId;
+    }
+
     public static class GameState {
-        public NetworkEntity[] npcEntities = new NetworkEntity[0];
         public NetworkEntity[] players = new NetworkEntity[0];
         public long tickNumber;
+    }
+
+    public static class UpdatedEntities {
+        public NetworkEntity[] npcEntities = new NetworkEntity[MESSAGE_SIZE];
+    }
+
+    public static class RemovedEntities {
+        public long[] removedEntities = new long[MESSAGE_SIZE];
     }
 
     public static class NetworkEntity {
@@ -56,11 +69,14 @@ public class Network {
         Kryo kryo = endPoint.getKryo();
 
         // Register in order of frequency (most used first)
-        kryo.register(UpdatePosition.class);
         kryo.register(UpdateAngle.class);
+        kryo.register(UpdatePosition.class);
         kryo.register(GameState.class);
         kryo.register(NetworkEntity.class);
         kryo.register(NetworkEntity[].class);
+        kryo.register(UpdatedEntities.class);
+        kryo.register(RemovedEntities.class);
+        kryo.register(UseAbility.class);
         kryo.register(RegisterName.class);
         kryo.register(String.class);
 
@@ -68,5 +84,6 @@ public class Network {
         kryo.register(float[].class);
         kryo.register(int[].class);
         kryo.register(byte[].class);
+        kryo.register(long[].class);
     }
 }

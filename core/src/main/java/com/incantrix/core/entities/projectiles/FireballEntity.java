@@ -23,11 +23,6 @@ public class FireballEntity extends OwnedEntity {
         this.type = EntityType.FIREBALL;
     }
 
-    @Override
-    public long getEntityId() {
-        return 0;
-    }
-
     public static void render(ShapeRenderer shapeRenderer, Network.NetworkEntity entity) {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(Color.ORANGE);

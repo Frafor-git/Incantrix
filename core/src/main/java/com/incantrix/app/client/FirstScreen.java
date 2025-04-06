@@ -46,13 +46,13 @@ public class FirstScreen implements Screen {
             renderPlayers();
         }
 
-        if (gameClient.gameState.npcEntities.length > 0) {
+        if (!gameClient.npcEntityMap.isEmpty()) {
             renderNpcEntities();
         }
     }
 
     private void renderNpcEntities() {
-        for (NetworkEntity entity : gameClient.gameState.npcEntities) {
+        for (NetworkEntity entity : gameClient.npcEntityMap.values()) {
             if (entity == null) {
                 continue;
             }
