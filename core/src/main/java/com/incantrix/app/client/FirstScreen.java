@@ -5,6 +5,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.incantrix.app.client.handlers.ClientAbilityHandler;
 import com.incantrix.core.entities.PlayerEntity;
 import com.incantrix.core.entities.projectiles.FireballEntity;
 import com.incantrix.core.enums.EntityType;
@@ -34,6 +35,9 @@ public class FirstScreen implements Screen {
         if (gameClient.gameState == null) {
             return;
         }
+
+        // Timers
+        ClientAbilityHandler.updateAbilityTimer(delta);
 
         // Handle input
         gameClient.handleInput(delta);

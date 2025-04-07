@@ -7,10 +7,7 @@ import com.esotericsoftware.kryonet.Listener;
 import com.incantrix.app.client.handlers.ClientAbilityHandler;
 import com.incantrix.app.client.handlers.ClientMovementHandler;
 import com.incantrix.network.Network;
-import com.incantrix.network.Network.NetworkEntity;
-import com.incantrix.network.Network.GameState;
-import com.incantrix.network.Network.RegisterName;
-import com.incantrix.network.Network.UpdatePosition;
+import com.incantrix.network.Network.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -41,12 +38,16 @@ public class GameClient {
                     handleGameState(state);
                 }
 
-                if (object instanceof Network.UpdatedEntities updated) {
+                if (object instanceof UpdatedEntities updated) {
                     handleEntityUpdate(updated);
                 }
 
-                if (object instanceof Network.RemovedEntities removed) {
+                if (object instanceof RemovedEntities removed) {
                     handleRemoveEntities(removed);
+                }
+
+                if (object instanceof UseAbilityConfirm confirm) {
+                    ClientAbilityHandler.handleAbilityConfirm(confirm);
                 }
             }
         });
@@ -113,7 +114,9 @@ public class GameClient {
     public void handleInput(float delta) {
         if (clientPlayer == null) return;
 
-        ClientMovementHandler.handlePositionUpdate(clientPlayer, lastReceivedTick, pendingInputs, client);
+        synchronized (pendingInputs) {
+            ClientMovementHandler.handlePositionUpdate(clientPlayer, lastReceivedTick, pendingInputs, client);
+        }
         ClientMovementHandler.handleAngleUpdate(clientPlayer, client);
         ClientAbilityHandler.handleAbilityUsage(clientPlayer, client);
     }
@@ -140,9 +143,11 @@ public class GameClient {
 
     private void replayPendingInputs(NetworkEntity player) {
         // Re-apply all unacknowledged inputs
-        for (UpdatePosition input : pendingInputs) {
-            if (input.id == player.id) {
-                ClientMovementHandler.applyInput(player, input.inputFlags);
+        synchronized (pendingInputs) {
+            for (UpdatePosition input : pendingInputs) {
+                if (input.id == player.id) {
+                    ClientMovementHandler.applyInput(player, input.inputFlags);
+                }
             }
         }
     }
@@ -150,6 +155,8 @@ public class GameClient {
     private void removeAcknowledgedInputs(long serverTick) {
         // Remove inputs that the server has processed
         // This assumes inputs include the tick number they were sent on
-        pendingInputs.removeIf(input -> input.tickNumber <= serverTick);
+        synchronized (pendingInputs) {
+            pendingInputs.removeIf(input -> input.tickNumber <= serverTick);
+        }
     }
 }

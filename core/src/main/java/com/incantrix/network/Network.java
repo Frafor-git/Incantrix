@@ -28,7 +28,11 @@ public class Network {
 
     public static class UseAbility {
         public long casterId;
-        public long abilityId;
+        public int abilityId;
+    }
+
+    public static class UseAbilityConfirm {
+        public int abilityId;
     }
 
     public static class GameState {
@@ -77,6 +81,7 @@ public class Network {
         kryo.register(UpdatedEntities.class);
         kryo.register(RemovedEntities.class);
         kryo.register(UseAbility.class);
+        kryo.register(UseAbilityConfirm.class);
         kryo.register(RegisterName.class);
         kryo.register(String.class);
 

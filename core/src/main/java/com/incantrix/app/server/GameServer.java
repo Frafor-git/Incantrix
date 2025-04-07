@@ -9,48 +9,47 @@ import com.incantrix.core.entities.PlayerEntity;
 import com.incantrix.core.entities.Entity;
 import com.incantrix.core.enums.Allegiance;
 import com.incantrix.network.Network;
+import com.incantrix.network.Network.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import static com.incantrix.network.Network.MESSAGE_SIZE;
 
 public class GameServer {
     private final Server server;
-    private final Map<Long, PlayerEntity> playerIdMap = new ConcurrentHashMap<>();
-    private final Map<Integer, PlayerEntity> connectionIdMap = new ConcurrentHashMap<>();
     private final List<Entity> players = new ArrayList<>(8);
     private final List<Entity> npcEntities = new ArrayList<>();
     private long nextId = 1;
     private long ticksProcessed = 0;
     private long lastReportTime = System.currentTimeMillis();
-    private ServerAbilityHandler abilityHandler;
+    private final ClientMapper clientMapper;
+    private final ServerAbilityHandler abilityHandler;
 
     public GameServer() throws IOException {
-        abilityHandler = new ServerAbilityHandler(playerIdMap, npcEntities);
+        clientMapper = new ClientMapper();
+        abilityHandler = new ServerAbilityHandler(clientMapper, npcEntities);
 
         server = new Server();
         Network.register(server);
         server.addListener(new Listener() {
             public void received(Connection connection, Object object) {
-                if (object instanceof Network.RegisterName register) {
+                if (object instanceof RegisterName register) {
                     handlePlayerRegistration(connection, register);
                 }
 
-                if (object instanceof Network.UpdatePosition update) {
+                if (object instanceof UpdatePosition update) {
                     updatePlayerPosition(update);
                 }
 
-                if (object instanceof Network.UpdateAngle update) {
+                if (object instanceof UpdateAngle update) {
                     updatePlayerAngle(update);
                 }
 
-                if (object instanceof Network.UseAbility useAbility) {
+                if (object instanceof UseAbility useAbility) {
                     abilityHandler.handleAbilityUsage(useAbility, nextId++);
                 }
             }
@@ -97,6 +96,7 @@ public class GameServer {
     private void gameTick(float delta) {
         // Send game state to all clients
         List<Long> entitiesToBeRemoved = new ArrayList<>();
+        abilityHandler.updateAllCooldowns(delta);
         players.removeIf(Entity::shouldBeRemoved);
         synchronized (npcEntities) {
             npcEntities.forEach(entity -> {
@@ -106,7 +106,7 @@ public class GameServer {
             });
             npcEntities.removeIf(Entity::shouldBeRemoved);
             npcEntities.forEach(entity -> entity.updatePosition(delta));
-            Network.GameState gameState = new Network.GameState();
+            GameState gameState = new GameState();
             gameState.players = getNetworkEntities(players);
             gameState.tickNumber = ticksProcessed++;
             server.sendToAllTCP(gameState);
@@ -118,7 +118,7 @@ public class GameServer {
         long now = System.currentTimeMillis();
         if (now - lastReportTime >= 1000) {
             System.out.printf("Server running at %.1f Hz with %d players%n",
-                ticksProcessed / ((now - lastReportTime) / 1000f), playerIdMap.size());
+                ticksProcessed / ((now - lastReportTime) / 1000f), clientMapper.getAmountOfPlayers());
             ticksProcessed = 0;
             lastReportTime = now;
         }
@@ -131,86 +131,79 @@ public class GameServer {
             k = i % MESSAGE_SIZE;
             removed[k] = entitiesToRemove.get(i);
             if (k == MESSAGE_SIZE - 1) {
-                Network.RemovedEntities removedMsg = new Network.RemovedEntities();
+                RemovedEntities removedMsg = new RemovedEntities();
                 removedMsg.removedEntities = Arrays.copyOf(removed, MESSAGE_SIZE);
                 server.sendToAllTCP(removedMsg);
                 removed = new long[MESSAGE_SIZE];
             }
         }
         if (entitiesToRemove.size() % MESSAGE_SIZE != 0) {
-            Network.RemovedEntities removedMsg = new Network.RemovedEntities();
+            RemovedEntities removedMsg = new RemovedEntities();
             removedMsg.removedEntities = Arrays.copyOf(removed, MESSAGE_SIZE);
             server.sendToAllTCP(removedMsg);
         }
     }
 
-    private void sendBatchedEntities(List<Entity> entities, Consumer<Network.UpdatedEntities> updateConsumer) {
-        Network.NetworkEntity[] updated = new Network.NetworkEntity[MESSAGE_SIZE];
+    private void sendBatchedEntities(List<Entity> entities, Consumer<UpdatedEntities> updateConsumer) {
+        NetworkEntity[] updated = new NetworkEntity[MESSAGE_SIZE];
         int k = 0;
         for (int i = 0; i < entities.size(); i++) {
             k = i % MESSAGE_SIZE;
-            updated[k] = Network.NetworkEntity.from(entities.get(i));
+            updated[k] = NetworkEntity.from(entities.get(i));
             if (k == MESSAGE_SIZE - 1) {
-                Network.UpdatedEntities updatedMsg = new Network.UpdatedEntities();
+                UpdatedEntities updatedMsg = new UpdatedEntities();
                 updatedMsg.npcEntities = Arrays.copyOf(updated, MESSAGE_SIZE);
                 updateConsumer.accept(updatedMsg);
-                updated = new Network.NetworkEntity[MESSAGE_SIZE];
+                updated = new NetworkEntity[MESSAGE_SIZE];
             }
         }
         if (entities.size() % MESSAGE_SIZE != 0) {
-            Network.UpdatedEntities updatedMsg = new Network.UpdatedEntities();
+            UpdatedEntities updatedMsg = new UpdatedEntities();
             updatedMsg.npcEntities = Arrays.copyOf(updated, MESSAGE_SIZE);
             updateConsumer.accept(updatedMsg);
         }
     }
 
-    private void handlePlayerRegistration(Connection connection, Network.RegisterName register) {
+    private void handlePlayerRegistration(Connection connection, RegisterName register) {
         Vector2 startPosition = new Vector2(100, 100);
         long playerId = nextId++;
         PlayerEntity entity = new PlayerEntity(playerId, Allegiance.NONE, startPosition, register.name);
-        playerIdMap.put(playerId, entity);
-        connectionIdMap.put(connection.getID(), entity);
-        Network.NetworkEntity networkEntity = Network.NetworkEntity.from(entity);
+        NetworkEntity networkEntity = NetworkEntity.from(entity);
+        clientMapper.registerNewPlayer(connection, entity);
         players.add(entity);
         connection.sendTCP(networkEntity);
 
         // Send full player list to new player
-        Network.GameState gameState = new Network.GameState();
+        GameState gameState = new GameState();
         gameState.players = getNetworkEntities(players);
         gameState.tickNumber = ticksProcessed;
         connection.sendTCP(gameState);
         sendBatchedEntities(npcEntities, connection::sendTCP);
     }
 
-    private Network.NetworkEntity[] getNetworkEntities(List<Entity> entities) {
-        Network.NetworkEntity[] networkEntities = new Network.NetworkEntity[entities.size()];
+    private NetworkEntity[] getNetworkEntities(List<Entity> entities) {
+        NetworkEntity[] networkEntities = new NetworkEntity[entities.size()];
         for (int i = 0; i < entities.size(); i++) {
-            networkEntities[i] = Network.NetworkEntity.from(entities.get(i));
+            networkEntities[i] = NetworkEntity.from(entities.get(i));
         }
         return networkEntities;
     }
 
-    private void updatePlayerPosition(Network.UpdatePosition update) {
-        PlayerEntity player = playerIdMap.get(update.id);
+    private void updatePlayerPosition(UpdatePosition update) {
+        PlayerEntity player = clientMapper.getPlayerByEntityId(update.id);
         if (player != null) {
             player.updatePosition(update.x, update.y);
         }
     }
 
-    private void updatePlayerAngle(Network.UpdateAngle update) {
-        PlayerEntity player = playerIdMap.get(update.id);
+    private void updatePlayerAngle(UpdateAngle update) {
+        PlayerEntity player = clientMapper.getPlayerByEntityId(update.id);
         if (player != null) {
             player.updateAngle(update.angle);
         }
     }
 
     private void handlePlayerDisconnection(Connection connection) {
-        PlayerEntity player = connectionIdMap.get(connection.getID());
-        if (player == null) {
-            return;
-        }
-        connectionIdMap.remove(connection.getID());
-        playerIdMap.remove(player.getEntityId());
-        player.dispose();
+        clientMapper.removePlayer(connection.getID());
     }
 }
