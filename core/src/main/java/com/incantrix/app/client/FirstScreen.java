@@ -2,8 +2,11 @@ package com.incantrix.app.client;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.incantrix.app.client.handlers.ClientAbilityHandler;
 import com.incantrix.core.entities.PlayerEntity;
@@ -14,14 +17,24 @@ import com.incantrix.network.Network.NetworkEntity;
 /** First screen of the application. Displayed after the application is created. */
 public class FirstScreen implements Screen {
     private OrthographicCamera camera;
+    private BitmapFont font;
+    private SpriteBatch spriteBatch;
     private final ShapeRenderer shapeRenderer = new ShapeRenderer();
     private final GameClient gameClient;
+    private long rendersProcessedThisSecond = 0;
+    private long lastReportTime = System.currentTimeMillis();
+    private float frameRate = 0;
 
     public FirstScreen() {
         // Start the dot at the center of the screen
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         gameClient = new GameClient();
+        font = new BitmapFont();
+        font.setColor(Color.BLACK);
+        spriteBatch = new SpriteBatch();
+        spriteBatch.enableBlending();
+        spriteBatch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
     }
 
     @Override
@@ -53,6 +66,9 @@ public class FirstScreen implements Screen {
         if (!gameClient.npcEntityMap.isEmpty()) {
             renderNpcEntities();
         }
+
+        rendersProcessedThisSecond++;
+        renderFrameRate();
     }
 
     private void renderNpcEntities() {
@@ -75,6 +91,22 @@ public class FirstScreen implements Screen {
             }
             PlayerEntity.render(shapeRenderer, player);
         }
+    }
+
+    private void renderFrameRate() {
+        long now = System.currentTimeMillis();
+        if (now - lastReportTime >= 1000) {
+            frameRate = rendersProcessedThisSecond / ((now - lastReportTime) / 1000f);
+            rendersProcessedThisSecond = 0;
+            lastReportTime = now;
+        }
+        spriteBatch.begin();
+        font.draw(
+            spriteBatch,
+            String.format("FPS %.1f", frameRate),
+            20,
+            Gdx.graphics.getHeight() - 20);
+        spriteBatch.end();
     }
 
     @Override
@@ -100,5 +132,7 @@ public class FirstScreen implements Screen {
     @Override
     public void dispose() {
         shapeRenderer.dispose();
+        font.dispose();
+        spriteBatch.dispose();
     }
 }

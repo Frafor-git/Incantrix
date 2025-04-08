@@ -24,6 +24,7 @@ public class GameServer {
     private final List<Entity> players = new ArrayList<>(8);
     private final List<Entity> npcEntities = new ArrayList<>();
     private long nextId = 1;
+    private long ticksProcessedThisSecond = 0;
     private long ticksProcessed = 0;
     private long lastReportTime = System.currentTimeMillis();
     private final ClientMapper clientMapper;
@@ -114,12 +115,13 @@ public class GameServer {
             sendBatchedRemovedEntities(entitiesToBeRemoved);
         }
 
+        ticksProcessedThisSecond++;
         // Log performance every second
         long now = System.currentTimeMillis();
         if (now - lastReportTime >= 1000) {
             System.out.printf("Server running at %.1f Hz with %d players%n",
-                ticksProcessed / ((now - lastReportTime) / 1000f), clientMapper.getAmountOfPlayers());
-            ticksProcessed = 0;
+                ticksProcessedThisSecond / ((now - lastReportTime) / 1000f), clientMapper.getAmountOfPlayers());
+            ticksProcessedThisSecond = 0;
             lastReportTime = now;
         }
     }

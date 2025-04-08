@@ -22,6 +22,7 @@ public class ClientAbilityHandler {
             useAbility.abilityId = AbilityIds.FIREBALL_ID;
             useAbility.casterId = clientPlayer.id;
             client.sendTCP(useAbility);
+            cooldownTracker.setGcdCooldown();
         }
     }
 

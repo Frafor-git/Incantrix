@@ -6,13 +6,19 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CooldownTracker {
+    private static final float GCD_TIME = 0.2f;
     private Map<Integer, Timer> cooldowns;
+    private Timer globalCooldown;
 
     public CooldownTracker() {
         cooldowns = new ConcurrentHashMap<>();
+        globalCooldown = new Timer(0);
     }
 
     public void updateCooldowns(float delta) {
+        if (!globalCooldown.isReady()) {
+            globalCooldown.decrease(delta);
+        }
         if (cooldowns.isEmpty()) {
             return;
         }
@@ -30,8 +36,12 @@ public class CooldownTracker {
         cooldowns.put(id, new Timer(AbilityMapper.getAbility(id).getTotalCooldown()));
     }
 
+    public void setGcdCooldown() {
+        globalCooldown.setCurrentTime(GCD_TIME);
+    }
+
     public boolean isAbilityReady(int id) {
-        return !cooldowns.containsKey(id);
+        return globalCooldown.isReady() && !cooldowns.containsKey(id);
     }
 
     static class Timer {
@@ -47,6 +57,10 @@ public class CooldownTracker {
 
         boolean isReady() {
             return currentTime <= 0;
+        }
+
+        void setCurrentTime(float time) {
+            currentTime = time;
         }
     }
 }

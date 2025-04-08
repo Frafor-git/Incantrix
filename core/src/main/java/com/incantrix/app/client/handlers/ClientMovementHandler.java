@@ -19,7 +19,8 @@ public class ClientMovementHandler {
         NetworkEntity clientPlayer,
         long lastReceivedTick,
         List<UpdatePosition> pendingInputs,
-        Client client) {
+        Client client,
+        float delta) {
         // Store current position for prediction
         float prevX = clientPlayer.x;
         float prevY = clientPlayer.y;
@@ -33,7 +34,7 @@ public class ClientMovementHandler {
 
         if (inputFlags != 0) {
             // Apply input immediately for prediction
-            applyInput(clientPlayer, inputFlags);
+            applyInput(clientPlayer, inputFlags, delta);
 
             if (!isValidMovement(clientPlayer.x, clientPlayer.y)) {
                 // Revert if invalid
@@ -57,9 +58,9 @@ public class ClientMovementHandler {
         }
     }
 
-    public static void applyInput(NetworkEntity player, byte inputFlags) {
+    public static void applyInput(NetworkEntity player, byte inputFlags, float delta) {
         // Apply movement based on input
-        float moveDistance = player.movementSpeed * Network.TICK_INTERVAL;
+        float moveDistance = player.movementSpeed * delta;
 
         if ((inputFlags & 0x01) != 0) {
             player.x -= moveDistance; // Left

@@ -115,7 +115,7 @@ public class GameClient {
         if (clientPlayer == null) return;
 
         synchronized (pendingInputs) {
-            ClientMovementHandler.handlePositionUpdate(clientPlayer, lastReceivedTick, pendingInputs, client);
+            ClientMovementHandler.handlePositionUpdate(clientPlayer, lastReceivedTick, pendingInputs, client, delta);
         }
         ClientMovementHandler.handleAngleUpdate(clientPlayer, client);
         ClientAbilityHandler.handleAbilityUsage(clientPlayer, client);
@@ -146,7 +146,7 @@ public class GameClient {
         synchronized (pendingInputs) {
             for (UpdatePosition input : pendingInputs) {
                 if (input.id == player.id) {
-                    ClientMovementHandler.applyInput(player, input.inputFlags);
+                    ClientMovementHandler.applyInput(player, input.inputFlags, Network.TICK_INTERVAL);
                 }
             }
         }
