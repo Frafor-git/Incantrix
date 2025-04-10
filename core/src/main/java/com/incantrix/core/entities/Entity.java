@@ -1,17 +1,17 @@
 package com.incantrix.core.entities;
 
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.incantrix.core.enums.Allegiance;
 import com.incantrix.core.enums.EntityType;
-import com.incantrix.network.Network;
 
 public abstract class Entity {
     protected Vector2 position;
-    protected double angle;
+    protected double movementAngle;
+    protected double facingAngle;
     protected long id;
     protected EntityType type;
     protected float movementSpeed;
+    protected float currentPushSpeed;
     protected Allegiance team;
 
     public long getEntityId() {
@@ -22,8 +22,12 @@ public abstract class Entity {
         return position;
     }
 
-    public double getAngle() {
-        return angle;
+    public double getMovementAngle() {
+        return movementAngle;
+    }
+
+    public double getFacingAngle() {
+        return facingAngle;
     }
 
     public EntityType getType() {
@@ -43,8 +47,12 @@ public abstract class Entity {
         position.y = newY;
     }
 
-    public void updateAngle(double newAngle) {
-        angle = newAngle;
+    public void updateFacingAngle(double newAngle) {
+        facingAngle = newAngle;
+    }
+
+    public float getCurrentPushSpeed() {
+        return currentPushSpeed;
     }
 
     public abstract void updatePosition(float delta);

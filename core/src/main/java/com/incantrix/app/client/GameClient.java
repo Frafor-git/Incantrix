@@ -15,7 +15,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class GameClient {
     private static final float PREDICTION_LERP_FACTOR = 0.3f;
-    private final Map<Long, NetworkEntity> predictedPlayers = new HashMap<>();
     private final List<UpdatePosition> pendingInputs = new ArrayList<>();
     private final Client client;
     private long lastReceivedTick = -1;
@@ -86,29 +85,20 @@ public class GameClient {
         gameState = state;
         lastReceivedTick = state.tickNumber;
 
+        if (clientPlayer == null) {
+            return;
+        }
+
         // Update player positions
         for (NetworkEntity serverPlayer : gameState.players) {
             if (serverPlayer == null) {
                 continue;
             }
-            NetworkEntity localPlayer = predictedPlayers.get(serverPlayer.id);
-            if (localPlayer != null) {
-                if (serverPlayer.id == clientPlayer.id) {
-                    // Reconciliation for our player
-                    reconcilePlayer(localPlayer, serverPlayer);
-                } else {
-                    // Direct update for remote players
-                    localPlayer.x = serverPlayer.x;
-                    localPlayer.y = serverPlayer.y;
-                    localPlayer.angle = serverPlayer.angle;
-                }
-            } else {
-                predictedPlayers.put(serverPlayer.id, serverPlayer);
+            if (serverPlayer.id == clientPlayer.id) {
+                // Reconciliation for our player
+                reconcilePlayer(serverPlayer, state.tickNumber);
             }
         }
-
-        // Remove acknowledged inputs
-        removeAcknowledgedInputs(state.tickNumber);
     }
 
     public void handleInput(float delta) {
@@ -121,32 +111,31 @@ public class GameClient {
         ClientAbilityHandler.handleAbilityUsage(clientPlayer, client);
     }
 
-    private void reconcilePlayer(NetworkEntity localPlayer, NetworkEntity serverPlayer) {
+    private void reconcilePlayer(NetworkEntity serverPlayer, long tickNumber) {
         // Calculate difference between client and server positions
-        float dx = serverPlayer.x - localPlayer.x;
-        float dy = serverPlayer.y - localPlayer.y;
+        float dx = serverPlayer.x - clientPlayer.x;
+        float dy = serverPlayer.y - clientPlayer.y;
         float distance = (float)Math.sqrt(dx*dx + dy*dy);
 
         // If the difference is significant, correct the position
         if (distance > 5f) { // Threshold in pixels
-            localPlayer.x = serverPlayer.x;
-            localPlayer.y = serverPlayer.y;
-
             // Replay unacknowledged inputs
-            replayPendingInputs(localPlayer);
+            replayPendingInputs();
         } else {
             // Smooth small corrections
-            localPlayer.x += (serverPlayer.x - localPlayer.x) * PREDICTION_LERP_FACTOR;
-            localPlayer.y += (serverPlayer.y - localPlayer.y) * PREDICTION_LERP_FACTOR;
+            clientPlayer.x += (serverPlayer.x - clientPlayer.x) * PREDICTION_LERP_FACTOR;
+            clientPlayer.y += (serverPlayer.y - clientPlayer.y) * PREDICTION_LERP_FACTOR;
+
+            removeAcknowledgedInputs(tickNumber);
         }
     }
 
-    private void replayPendingInputs(NetworkEntity player) {
+    private void replayPendingInputs() {
         // Re-apply all unacknowledged inputs
         synchronized (pendingInputs) {
             for (UpdatePosition input : pendingInputs) {
-                if (input.id == player.id) {
-                    ClientMovementHandler.applyInput(player, input.inputFlags, Network.TICK_INTERVAL);
+                if (input.tickNumber <= lastReceivedTick) {
+                    client.sendTCP(input);
                 }
             }
         }

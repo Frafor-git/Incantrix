@@ -201,7 +201,7 @@ public class GameServer {
     private void updatePlayerAngle(UpdateAngle update) {
         PlayerEntity player = clientMapper.getPlayerByEntityId(update.id);
         if (player != null) {
-            player.updateAngle(update.angle);
+            player.updateFacingAngle(update.angle);
         }
     }
 

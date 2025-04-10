@@ -18,7 +18,7 @@ public class FireballEntity extends OwnedEntity {
         this.creator = creator;
         this.team = allegiance;
         this.position = position;
-        this.angle = angle;
+        this.movementAngle = angle;
         this.movementSpeed = 400f;
         this.type = EntityType.FIREBALL;
     }
@@ -33,8 +33,8 @@ public class FireballEntity extends OwnedEntity {
     @Override
     public void updatePosition(float delta) {
         float moveDistance = movementSpeed * delta;
-        position.x += (float) (moveDistance * Math.cos(angle));
-        position.y += (float) (moveDistance * Math.sin(angle));
+        position.x += (float) (moveDistance * Math.cos(movementAngle));
+        position.y += (float) (moveDistance * Math.sin(movementAngle));
 
         if (Boundary.isOutOfBounds(position.x, position.y)) {
             dispose();

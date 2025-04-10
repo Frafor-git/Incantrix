@@ -89,7 +89,11 @@ public class FirstScreen implements Screen {
             if (player == null) {
                 continue;
             }
-            PlayerEntity.render(shapeRenderer, player);
+            if (player.id == gameClient.clientPlayer.id) {
+                PlayerEntity.render(shapeRenderer, gameClient.clientPlayer);
+            } else {
+                PlayerEntity.render(shapeRenderer, player);
+            }
         }
     }
 

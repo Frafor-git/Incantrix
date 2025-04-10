@@ -33,7 +33,7 @@ public class ServerAbilityHandler {
         if (useAbility.abilityId == AbilityIds.FIREBALL_ID) {
             synchronized (npcEntities) {
                 npcEntities.add(new FireballEntity(
-                    id, caster, Allegiance.CREATOR_ONLY, caster.getPosition().cpy(), caster.getAngle()));
+                    id, caster, Allegiance.CREATOR_ONLY, caster.getPosition().cpy(), caster.getFacingAngle()));
             }
         }
         clientMapper.getCooldownTracker(caster.getEntityId()).trackCooldown(useAbility.abilityId);

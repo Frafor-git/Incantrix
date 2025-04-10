@@ -52,12 +52,12 @@ public class PlayerEntity extends Entity {
     }
 
     private static void renderShape(ShapeRenderer shapeRenderer, Network.NetworkEntity entity) {
-        double directionCornerX = CORNER_DISTANCE * Math.cos(entity.angle);
-        double directionCornerY = CORNER_DISTANCE * Math.sin(entity.angle);
-        double leftBackCornerX = CORNER_DISTANCE * Math.cos(entity.angle + Math.PI*4/3);
-        double leftBackCornerY = CORNER_DISTANCE * Math.sin(entity.angle + Math.PI*4/3);
-        double rightBackCornerX = CORNER_DISTANCE * Math.cos(entity.angle + Math.PI*2/3);
-        double rightBackCornerY = CORNER_DISTANCE * Math.sin(entity.angle + Math.PI*2/3);
+        double directionCornerX = CORNER_DISTANCE * Math.cos(entity.facingAngle);
+        double directionCornerY = CORNER_DISTANCE * Math.sin(entity.facingAngle);
+        double leftBackCornerX = CORNER_DISTANCE * Math.cos(entity.facingAngle + Math.PI*4/3);
+        double leftBackCornerY = CORNER_DISTANCE * Math.sin(entity.facingAngle + Math.PI*4/3);
+        double rightBackCornerX = CORNER_DISTANCE * Math.cos(entity.facingAngle + Math.PI*2/3);
+        double rightBackCornerY = CORNER_DISTANCE * Math.sin(entity.facingAngle + Math.PI*2/3);
 
         shapeRenderer.triangle(
             (float) (entity.x + leftBackCornerX),

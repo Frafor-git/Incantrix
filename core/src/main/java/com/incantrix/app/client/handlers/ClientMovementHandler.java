@@ -4,23 +4,21 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.esotericsoftware.kryonet.Client;
 import com.incantrix.core.utils.Boundary;
-import com.incantrix.network.Network;
 import com.incantrix.network.Network.*;
 
 import java.util.List;
 
 public class ClientMovementHandler {
-
     private ClientMovementHandler() {
         // Util class
     }
 
     public static void handlePositionUpdate(
-        NetworkEntity clientPlayer,
-        long lastReceivedTick,
-        List<UpdatePosition> pendingInputs,
-        Client client,
-        float delta) {
+            NetworkEntity clientPlayer,
+            long lastReceivedTick,
+            List<UpdatePosition> pendingInputs,
+            Client client,
+            float delta) {
         // Store current position for prediction
         float prevX = clientPlayer.x;
         float prevY = clientPlayer.y;
@@ -81,10 +79,10 @@ public class ClientMovementHandler {
     }
 
     public static void handleAngleUpdate(NetworkEntity clientPlayer, Client client) {
-        clientPlayer.angle = updateAngle(clientPlayer);
+        clientPlayer.facingAngle = updateAngle(clientPlayer);
         UpdateAngle updateAngle = new UpdateAngle();
         updateAngle.id = clientPlayer.id;
-        updateAngle.angle = clientPlayer.angle;
+        updateAngle.angle = clientPlayer.facingAngle;
         client.sendTCP(updateAngle);
     }
 

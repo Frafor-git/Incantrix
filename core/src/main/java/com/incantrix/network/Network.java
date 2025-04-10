@@ -49,8 +49,9 @@ public class Network {
     }
 
     public static class NetworkEntity {
-        public float x, y, movementSpeed;
-        public double angle;
+        public float x, y, movementSpeed, currentPushSpeed;
+        public double facingAngle;
+        public double movementAngle;
         public long id;
         public byte entityType;
         public byte allegiance;
@@ -59,7 +60,9 @@ public class Network {
             NetworkEntity networkEntity = new NetworkEntity();
             networkEntity.x = entity.getPosition().x;
             networkEntity.y = entity.getPosition().y;
-            networkEntity.angle = entity.getAngle();
+            networkEntity.movementAngle = entity.getMovementAngle();
+            networkEntity.currentPushSpeed = entity.getCurrentPushSpeed();
+            networkEntity.facingAngle = entity.getFacingAngle();
             networkEntity.entityType = entity.getType().getValue();
             networkEntity.allegiance = entity.getTeam().getValue();
             networkEntity.id = entity.getEntityId();
