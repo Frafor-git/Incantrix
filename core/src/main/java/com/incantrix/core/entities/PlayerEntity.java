@@ -5,6 +5,9 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.incantrix.core.enums.Allegiance;
 import com.incantrix.core.enums.EntityType;
+import com.incantrix.core.utils.Boundary;
+import com.incantrix.core.utils.Physics;
+import com.incantrix.core.utils.Trigonometry;
 import com.incantrix.network.Network;
 
 public class PlayerEntity extends Entity {
@@ -14,6 +17,7 @@ public class PlayerEntity extends Entity {
 
     public PlayerEntity(long id, Allegiance team, Vector2 startPosition, String name) {
         this.movementSpeed = 200f;
+        this.sizeRadius = 10f;
         this.id = id;
         this.team = team;
         this.name = name;
@@ -27,7 +31,40 @@ public class PlayerEntity extends Entity {
 
     @Override
     public void updatePosition(float delta) {
+        outOfBoundsChecks();
 
+        float moveDistance = currentPushSpeed * delta;
+        float xBefore =  position.x;
+        float yBefore =  position.y;
+        position.x += (float) (moveDistance * Math.cos(pushAngle));
+        position.y += (float) (moveDistance * Math.sin(pushAngle));
+
+        if (Boundary.isOutOfBoundsX(position.x)) {
+            pushAngle = Trigonometry.mirrorAngleX(pushAngle);
+            position.x = xBefore + (float) (moveDistance * Math.cos(pushAngle));
+        }
+
+        if (Boundary.isOutOfBoundsY(position.y)) {
+            pushAngle = Trigonometry.mirrorAngleY(pushAngle);
+            position.y = yBefore + (float) (moveDistance * Math.cos(pushAngle));
+        }
+
+        currentPushSpeed = Physics.applyFriction(currentPushSpeed, delta);
+    }
+
+    private void outOfBoundsChecks() {
+        if (Boundary.isOutOfBoundsXRight(position.x)) {
+            position.x = Boundary.WIDTH;
+        }
+        if (Boundary.isOutOfBoundsXLeft(position.x)) {
+            position.x = 0;
+        }
+        if (Boundary.isOutOfBoundsYUp(position.y)) {
+            position.y = Boundary.HEIGHT;
+        }
+        if (Boundary.isOutOfBoundsYDown(position.y)) {
+            position.y = 0;
+        }
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.esotericsoftware.kryonet.Server;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
+import com.incantrix.app.server.handlers.CollisionHandler;
 import com.incantrix.app.server.handlers.ServerAbilityHandler;
 import com.incantrix.core.entities.PlayerEntity;
 import com.incantrix.core.entities.Entity;
@@ -29,9 +30,11 @@ public class GameServer {
     private long lastReportTime = System.currentTimeMillis();
     private final ClientMapper clientMapper;
     private final ServerAbilityHandler abilityHandler;
+    private final CollisionHandler collisionHandler;
 
     public GameServer() throws IOException {
         clientMapper = new ClientMapper();
+        collisionHandler = new CollisionHandler(clientMapper);
         abilityHandler = new ServerAbilityHandler(clientMapper, npcEntities);
 
         server = new Server();
@@ -107,6 +110,8 @@ public class GameServer {
             });
             npcEntities.removeIf(Entity::shouldBeRemoved);
             npcEntities.forEach(entity -> entity.updatePosition(delta));
+            players.forEach(player -> player.updatePosition(delta));
+            collisionHandler.handleCollisions(players, npcEntities);
             GameState gameState = new GameState();
             gameState.players = getNetworkEntities(players);
             gameState.tickNumber = ticksProcessed++;
@@ -194,7 +199,7 @@ public class GameServer {
     private void updatePlayerPosition(UpdatePosition update) {
         PlayerEntity player = clientMapper.getPlayerByEntityId(update.id);
         if (player != null) {
-            player.updatePosition(update.x, update.y);
+            player.updatePositionWithDistance(update.xDist, update.yDist);
         }
     }
 

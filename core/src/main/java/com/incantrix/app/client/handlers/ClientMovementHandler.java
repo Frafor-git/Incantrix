@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.esotericsoftware.kryonet.Client;
 import com.incantrix.core.utils.Boundary;
+import com.incantrix.core.utils.Trigonometry;
 import com.incantrix.network.Network.*;
 
 import java.util.List;
@@ -44,8 +45,8 @@ public class ClientMovementHandler {
             // Create and store input
             UpdatePosition input = new UpdatePosition();
             input.id = clientPlayer.id;
-            input.x = clientPlayer.x;
-            input.y = clientPlayer.y;
+            input.xDist = clientPlayer.x - prevX;
+            input.yDist = clientPlayer.y - prevY;
             input.inputFlags = inputFlags;
             input.tickNumber = lastReceivedTick + 1; // Predict next tick
 
@@ -92,23 +93,6 @@ public class ClientMovementHandler {
         float cursorX = Gdx.input.getX();
         float cursorY = Gdx.graphics.getHeight() - Gdx.input.getY();
 
-        double xRelative = cursorX - x;
-        double yRelative = cursorY - y;
-        if (xRelative == 0 && yRelative > 0) {
-            return Math.PI / 2;
-        }
-        if (xRelative == 0 && yRelative < 0) {
-            return  - Math.PI / 2;
-        }
-        if ((yRelative == 0 && xRelative > 0) || (yRelative == 0 && xRelative == 0) ) {
-            return 0;
-        }
-        if (yRelative == 0 && xRelative < 0 ) {
-            return Math.PI;
-        }
-        if (xRelative < 0) {
-            return Math.atan((y - cursorY)/(x - cursorX)) - Math.PI;
-        }
-        return Math.atan((y - cursorY)/(x - cursorX));
+        return Trigonometry.getAngle(cursorX - x, cursorY - y);
     }
 }

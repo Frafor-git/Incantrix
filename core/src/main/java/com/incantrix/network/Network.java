@@ -16,7 +16,7 @@ public class Network {
 
     public static class UpdatePosition {
         public long id;
-        public float x, y;
+        public float xDist, yDist;
         public byte inputFlags;
         public long tickNumber;
     }
@@ -33,6 +33,10 @@ public class Network {
 
     public static class UseAbilityConfirm {
         public int abilityId;
+    }
+
+    public static class CollisionEvent {
+        public byte withType;
     }
 
     public static class GameState {
@@ -60,7 +64,7 @@ public class Network {
             NetworkEntity networkEntity = new NetworkEntity();
             networkEntity.x = entity.getPosition().x;
             networkEntity.y = entity.getPosition().y;
-            networkEntity.movementAngle = entity.getMovementAngle();
+            networkEntity.movementAngle = entity.getPushAngle();
             networkEntity.currentPushSpeed = entity.getCurrentPushSpeed();
             networkEntity.facingAngle = entity.getFacingAngle();
             networkEntity.entityType = entity.getType().getValue();
@@ -85,6 +89,7 @@ public class Network {
         kryo.register(RemovedEntities.class);
         kryo.register(UseAbility.class);
         kryo.register(UseAbilityConfirm.class);
+        kryo.register(CollisionEvent.class);
         kryo.register(RegisterName.class);
         kryo.register(String.class);
 

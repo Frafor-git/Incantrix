@@ -48,6 +48,10 @@ public class GameClient {
                 if (object instanceof UseAbilityConfirm confirm) {
                     ClientAbilityHandler.handleAbilityConfirm(confirm);
                 }
+
+                if (object instanceof CollisionEvent collision) {
+
+                }
             }
         });
 
@@ -123,8 +127,8 @@ public class GameClient {
             replayPendingInputs();
         } else {
             // Smooth small corrections
-            clientPlayer.x += (serverPlayer.x - clientPlayer.x) * PREDICTION_LERP_FACTOR;
-            clientPlayer.y += (serverPlayer.y - clientPlayer.y) * PREDICTION_LERP_FACTOR;
+            clientPlayer.x = serverPlayer.x + (serverPlayer.x - clientPlayer.x) * PREDICTION_LERP_FACTOR;
+            clientPlayer.y = serverPlayer.y + (serverPlayer.y - clientPlayer.y) * PREDICTION_LERP_FACTOR;
 
             removeAcknowledgedInputs(tickNumber);
         }

@@ -3,16 +3,19 @@ package com.incantrix.core.entities;
 import com.badlogic.gdx.math.Vector2;
 import com.incantrix.core.enums.Allegiance;
 import com.incantrix.core.enums.EntityType;
+import com.incantrix.core.utils.Boundary;
 
 public abstract class Entity {
     protected Vector2 position;
-    protected double movementAngle;
+    protected double pushAngle;
     protected double facingAngle;
     protected long id;
     protected EntityType type;
     protected float movementSpeed;
     protected float currentPushSpeed;
     protected Allegiance team;
+
+    protected float sizeRadius;
 
     public long getEntityId() {
         return id;
@@ -22,8 +25,8 @@ public abstract class Entity {
         return position;
     }
 
-    public double getMovementAngle() {
-        return movementAngle;
+    public double getPushAngle() {
+        return pushAngle;
     }
 
     public double getFacingAngle() {
@@ -42,9 +45,15 @@ public abstract class Entity {
         return team;
     }
 
-    public void updatePosition(float newX, float newY) {
-        position.x = newX;
-        position.y = newY;
+    public void updatePositionWithDistance(float xDist, float yDist) {
+        float oldX = position.x;
+        float oldY = position.y;
+        position.x += xDist;
+        position.y += yDist;
+        if (Boundary.isOutOfBounds(position.x, position.y)) {
+            position.x = oldX;
+            position.y = oldY;
+        }
     }
 
     public void updateFacingAngle(double newAngle) {
@@ -53,6 +62,18 @@ public abstract class Entity {
 
     public float getCurrentPushSpeed() {
         return currentPushSpeed;
+    }
+
+    public float getSizeRadius() {
+        return sizeRadius;
+    }
+
+    public void setPushAngle(double pushAngle) {
+        this.pushAngle = pushAngle;
+    }
+
+    public void setCurrentPushSpeed(float currentPushSpeed) {
+        this.currentPushSpeed = currentPushSpeed;
     }
 
     public abstract void updatePosition(float delta);

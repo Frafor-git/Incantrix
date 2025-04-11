@@ -18,9 +18,10 @@ public class FireballEntity extends OwnedEntity {
         this.creator = creator;
         this.team = allegiance;
         this.position = position;
-        this.movementAngle = angle;
+        this.pushAngle = angle;
         this.movementSpeed = 400f;
         this.type = EntityType.FIREBALL;
+        this.sizeRadius = 5f;
     }
 
     public static void render(ShapeRenderer shapeRenderer, Network.NetworkEntity entity) {
@@ -33,8 +34,8 @@ public class FireballEntity extends OwnedEntity {
     @Override
     public void updatePosition(float delta) {
         float moveDistance = movementSpeed * delta;
-        position.x += (float) (moveDistance * Math.cos(movementAngle));
-        position.y += (float) (moveDistance * Math.sin(movementAngle));
+        position.x += (float) (moveDistance * Math.cos(pushAngle));
+        position.y += (float) (moveDistance * Math.sin(pushAngle));
 
         if (Boundary.isOutOfBounds(position.x, position.y)) {
             dispose();
