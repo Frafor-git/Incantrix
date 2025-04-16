@@ -49,13 +49,13 @@ public class Trigonometry {
             entity.setPushAngle(angle1);
             return;
         }
-        double speed1x = Math.sin(angle1) * speed1;
-        double speed1y = Math.cos(angle1) * speed1;
-        double speed2x = Math.sin(angle2) * speed2;
-        double speed2y = Math.cos(angle2) * speed2;
+        double speed1x = Math.cos(angle1) * speed1;
+        double speed1y = Math.sin(angle1) * speed1;
+        double speed2x = Math.cos(angle2) * speed2;
+        double speed2y = Math.sin(angle2) * speed2;
         double totX = speed1x + speed2x;
         double totY = speed1y + speed2y;
-        double totalSpeed = Math.sqrt(totX * totX + totY + totY);
+        double totalSpeed = Math.sqrt(totX * totX + totY * totY);
         double newAngle = getAngle(totX, totY);
         entity.setCurrentPushSpeed((float) totalSpeed);
         entity.setPushAngle(newAngle);

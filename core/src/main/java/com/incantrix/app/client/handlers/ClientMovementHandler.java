@@ -23,6 +23,7 @@ public class ClientMovementHandler {
         // Store current position for prediction
         float prevX = clientPlayer.x;
         float prevY = clientPlayer.y;
+        outOfBoundsChecks(clientPlayer);
 
         // Process input
         byte inputFlags = 0;
@@ -72,6 +73,21 @@ public class ClientMovementHandler {
         }
         if ((inputFlags & 0x08) != 0){
             player.y -= moveDistance; // Down
+        }
+    }
+
+    private static void outOfBoundsChecks(NetworkEntity clientPlayer) {
+        if (Boundary.isOutOfBoundsXRight(clientPlayer.x)) {
+            clientPlayer.x = Boundary.WIDTH;
+        }
+        if (Boundary.isOutOfBoundsXLeft(clientPlayer.x)) {
+            clientPlayer.x = 0;
+        }
+        if (Boundary.isOutOfBoundsYUp(clientPlayer.y)) {
+            clientPlayer.y = Boundary.HEIGHT;
+        }
+        if (Boundary.isOutOfBoundsYDown(clientPlayer.y)) {
+            clientPlayer.y = 0;
         }
     }
 
