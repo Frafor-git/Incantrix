@@ -7,21 +7,23 @@ import com.incantrix.core.enums.Allegiance;
 import com.incantrix.core.enums.EntityType;
 import com.incantrix.core.utils.Boundary;
 import com.incantrix.core.utils.Physics;
-import com.incantrix.core.utils.Trigonometry;
+import com.incantrix.core.utils.VelocityMomentum;
 import com.incantrix.network.Network;
 
 public class PlayerEntity extends Entity {
+    private static final float INITIAL_SPEED = 200f;
     private static final float CORNER_DISTANCE = 10f;
     private final String name;
     private boolean shouldBeRemoved = false;
 
     public PlayerEntity(long id, Allegiance team, Vector2 startPosition, String name) {
-        this.movementSpeed = 200f;
+        this.movementSpeed = INITIAL_SPEED;
         this.sizeRadius = 10f;
         this.id = id;
         this.team = team;
         this.name = name;
         this.position = startPosition;
+        this.momentum = new VelocityMomentum(1);
     }
 
     @Override
@@ -33,34 +35,34 @@ public class PlayerEntity extends Entity {
     public void updatePosition(float delta) {
         outOfBoundsChecks();
 
-        float moveDistance = currentPushSpeed * delta;
+        float moveDistance = momentum.speed * delta;
         float xBefore =  position.x;
         float yBefore =  position.y;
-        position.x += (float) (moveDistance * Math.cos(pushAngle));
-        position.y += (float) (moveDistance * Math.sin(pushAngle));
+        position.x += (float) (moveDistance * Math.cos(momentum.angle));
+        position.y += (float) (moveDistance * Math.sin(momentum.angle));
 
         if (Boundary.isOutOfBoundsX(position.x)) {
-            pushAngle = Trigonometry.mirrorAngleX(pushAngle);
-            position.x = xBefore + (float) (moveDistance * Math.cos(pushAngle));
+            momentum.mirrorX();
+            position.x = xBefore + (float) (moveDistance * Math.cos(momentum.angle));
         }
 
         if (Boundary.isOutOfBoundsY(position.y)) {
-            pushAngle = Trigonometry.mirrorAngleY(pushAngle);
-            position.y = yBefore + (float) (moveDistance * Math.cos(pushAngle));
+            momentum.mirrorY();
+            position.y = yBefore + (float) (moveDistance * Math.cos(momentum.angle));
         }
 
-        currentPushSpeed = Physics.applyFriction(currentPushSpeed, delta);
+        momentum.speed = Physics.applyFriction(momentum.speed, delta);
     }
 
     private void outOfBoundsChecks() {
         if (Boundary.isOutOfBoundsXRight(position.x)) {
-            position.x = Boundary.WIDTH;
+            position.x = Boundary.WIDTH - 1;
         }
         if (Boundary.isOutOfBoundsXLeft(position.x)) {
             position.x = 0;
         }
         if (Boundary.isOutOfBoundsYUp(position.y)) {
-            position.y = Boundary.HEIGHT;
+            position.y = Boundary.HEIGHT - 1;
         }
         if (Boundary.isOutOfBoundsYDown(position.y)) {
             position.y = 0;
@@ -75,10 +77,6 @@ public class PlayerEntity extends Entity {
     @Override
     public EntityType getType() {
         return EntityType.ACTOR;
-    }
-
-    public Allegiance getTeamId() {
-        return team;
     }
 
     public static void render(ShapeRenderer shapeRenderer, Network.NetworkEntity entity) {

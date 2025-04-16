@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.incantrix.app.client.handlers.ClientAbilityHandler;
 import com.incantrix.core.entities.PlayerEntity;
 import com.incantrix.core.entities.projectiles.FireballEntity;
+import com.incantrix.core.entities.projectiles.HomingMissileEntity;
 import com.incantrix.core.enums.EntityType;
 import com.incantrix.network.Network.NetworkEntity;
 
@@ -79,6 +80,9 @@ public class FirstScreen implements Screen {
             switch (EntityType.from(entity.entityType)) {
                 case FIREBALL:
                     FireballEntity.render(shapeRenderer, entity);
+                    break;
+                case HOMING_MISSILE:
+                    HomingMissileEntity.render(shapeRenderer, entity);
                     break;
             }
         }

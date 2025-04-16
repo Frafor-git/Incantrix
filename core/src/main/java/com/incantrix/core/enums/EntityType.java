@@ -2,7 +2,8 @@ package com.incantrix.core.enums;
 
 public enum EntityType {
     ACTOR((byte) 0),
-    FIREBALL((byte) 1);
+    FIREBALL((byte) 1),
+    HOMING_MISSILE((byte) 2);
 
     private final byte value;
 
@@ -14,6 +15,7 @@ public enum EntityType {
         return switch (value) {
             case 0 -> ACTOR;
             case 1 -> FIREBALL;
+            case 2 -> HOMING_MISSILE;
             default -> throw new IllegalArgumentException("Invalid byte value");
         };
     }

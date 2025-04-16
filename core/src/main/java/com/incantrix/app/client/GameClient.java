@@ -122,16 +122,12 @@ public class GameClient {
         float distance = (float)Math.sqrt(dx*dx + dy*dy);
 
         // If the difference is significant, correct the position
-        if (distance > 5f) { // Threshold in pixels
-            // Replay unacknowledged inputs
-            replayPendingInputs();
-        } else {
-            // Smooth small corrections
-            clientPlayer.x = serverPlayer.x + (serverPlayer.x - clientPlayer.x) * PREDICTION_LERP_FACTOR;
-            clientPlayer.y = serverPlayer.y + (serverPlayer.y - clientPlayer.y) * PREDICTION_LERP_FACTOR;
-
-            removeAcknowledgedInputs(tickNumber);
-        }
+//        if (distance > 5f) { // Threshold in pixels
+//            // Replay unacknowledged inputs
+//            replayPendingInputs();
+        clientPlayer.x = serverPlayer.x + (serverPlayer.x - clientPlayer.x) * PREDICTION_LERP_FACTOR;
+        clientPlayer.y = serverPlayer.y + (serverPlayer.y - clientPlayer.y) * PREDICTION_LERP_FACTOR;
+        removeAcknowledgedInputs(tickNumber);
     }
 
     private void replayPendingInputs() {

@@ -6,6 +6,7 @@ import com.incantrix.core.entities.Entity;
 import com.incantrix.core.entities.OwnedEntity;
 import com.incantrix.core.enums.Allegiance;
 import com.incantrix.core.utils.Trigonometry;
+import com.incantrix.core.utils.VelocityMomentum;
 import com.incantrix.network.Network.*;
 
 import java.util.List;
@@ -41,9 +42,7 @@ public class CollisionHandler {
     }
 
     private boolean isColliding(Entity player, Entity entity) {
-        float x = player.getPosition().x - entity.getPosition().x;
-        float y = player.getPosition().y - entity.getPosition().y;
-        float distanceSqr = x*x + y*y;
+        float distanceSqr = Trigonometry.getDistanceSqr(player, entity);
         float minAllowedDistanceSqr = (player.getSizeRadius() + entity.getSizeRadius()) *
             (player.getSizeRadius() + entity.getSizeRadius());
         return distanceSqr <= minAllowedDistanceSqr;
@@ -58,18 +57,22 @@ public class CollisionHandler {
     private CollisionEvent collisionByType(Entity player, Entity entity) {
         CollisionEvent collision = new CollisionEvent();
         collision.withType = entity.getType().getValue();
-        return switch (entity.getType()) {
-            case FIREBALL -> {
-                float addedSpeed = 400f;
-                double angle = Trigonometry.getAngle(
-                    player.getPosition().x - entity.getPosition().x,
-                    player.getPosition().y - entity.getPosition().y);
-                Trigonometry.collisionVelocityChange(
-                    player.getCurrentPushSpeed(), player.getPushAngle(), addedSpeed, angle, player);
-                entity.dispose();
-                yield collision;
+        switch (entity.getType()) {
+            case FIREBALL, HOMING_MISSILE -> {
+                handleDisposableCollider(player, entity);
             }
             default -> new CollisionEvent();
         };
+        return collision;
+    }
+
+    private static void handleDisposableCollider(Entity player, Entity entity) {
+        VelocityMomentum collider = VelocityMomentum.from(entity.getVelocityMomentum());
+        collider.angle = Trigonometry.getAngle(
+            player.getPosition().x - entity.getPosition().x,
+            player.getPosition().y - entity.getPosition().y);
+        player.setVelocityMomentum(VelocityMomentum.collisionVelocityChange(
+            player.getVelocityMomentum(), collider));
+        entity.dispose();
     }
 }

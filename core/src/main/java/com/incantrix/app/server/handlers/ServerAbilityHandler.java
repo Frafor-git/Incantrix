@@ -5,6 +5,7 @@ import com.incantrix.core.abilities.AbilityIds;
 import com.incantrix.core.entities.Entity;
 import com.incantrix.core.entities.PlayerEntity;
 import com.incantrix.core.entities.projectiles.FireballEntity;
+import com.incantrix.core.entities.projectiles.HomingMissileEntity;
 import com.incantrix.core.enums.Allegiance;
 import com.incantrix.network.Network.UseAbilityConfirm;
 import com.incantrix.network.Network.UseAbility;
@@ -34,6 +35,17 @@ public class ServerAbilityHandler {
             synchronized (npcEntities) {
                 npcEntities.add(new FireballEntity(
                     id, caster, Allegiance.CREATOR_ONLY, caster.getPosition().cpy(), caster.getFacingAngle()));
+            }
+        } else if (useAbility.abilityId == AbilityIds.HOMING_MISSILE_ID) {
+            PlayerEntity target = clientMapper.findEnemyPlayerClosestTo(useAbility.cursorX, useAbility.cursorY, caster);
+            synchronized (npcEntities) {
+                npcEntities.add(new HomingMissileEntity(
+                    id,
+                    caster,
+                    Allegiance.CREATOR_ONLY,
+                    caster.getPosition().cpy(),
+                    caster.getFacingAngle(),
+                    target));
             }
         }
         clientMapper.getCooldownTracker(caster.getEntityId()).trackCooldown(useAbility.abilityId);

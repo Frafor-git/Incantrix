@@ -3,6 +3,8 @@ package com.incantrix.app.server;
 import com.esotericsoftware.kryonet.Connection;
 import com.incantrix.core.abilities.CooldownTracker;
 import com.incantrix.core.entities.PlayerEntity;
+import com.incantrix.core.enums.Allegiance;
+import com.incantrix.core.utils.Trigonometry;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,6 +41,36 @@ public class ClientMapper {
 
     public void forEachCooldownTracker(Consumer<CooldownTracker> consumer) {
         playerCooldowns.values().forEach(consumer);
+    }
+
+    public PlayerEntity findEnemyPlayerClosestTo(float cursorX, float cursorY, PlayerEntity caster) {
+        float distanceSqr = Float.MAX_VALUE;
+        PlayerEntity closestEnemy = null;
+
+        for (PlayerEntity player : playerIdMap.values()) {
+            if (player.getEntityId() == caster.getEntityId()) {
+                continue;
+            }
+
+            if (isEnemy(caster, player)) {
+                continue;
+            }
+            float newDistanceSqr = Trigonometry.getDistanceSqr(
+                cursorX, cursorY, player.getPosition().x, player.getPosition().y);
+
+            if (newDistanceSqr < distanceSqr) {
+                distanceSqr = newDistanceSqr;
+                closestEnemy = player;
+            }
+        }
+
+        return closestEnemy;
+    }
+
+    private static boolean isEnemy(PlayerEntity reference, PlayerEntity other) {
+        return reference.getTeam() != Allegiance.NONE
+            && reference.getTeam() != Allegiance.CREATOR_ONLY
+            && other.getTeam() == reference.getTeam();
     }
 
     public void removePlayer(int connectionId) {

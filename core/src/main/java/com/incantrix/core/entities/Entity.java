@@ -4,16 +4,15 @@ import com.badlogic.gdx.math.Vector2;
 import com.incantrix.core.enums.Allegiance;
 import com.incantrix.core.enums.EntityType;
 import com.incantrix.core.utils.Boundary;
+import com.incantrix.core.utils.VelocityMomentum;
 
 public abstract class Entity {
     protected Vector2 position;
-    protected double pushAngle;
     protected double facingAngle;
     protected long id;
-    protected EntityType type;
     protected float movementSpeed;
-    protected float currentPushSpeed;
     protected Allegiance team;
+    protected VelocityMomentum momentum;
 
     protected float sizeRadius;
 
@@ -25,8 +24,8 @@ public abstract class Entity {
         return position;
     }
 
-    public double getPushAngle() {
-        return pushAngle;
+    public VelocityMomentum getVelocityMomentum() {
+        return momentum;
     }
 
     public double getFacingAngle() {
@@ -34,7 +33,7 @@ public abstract class Entity {
     }
 
     public EntityType getType() {
-        return type;
+        throw new RuntimeException("Method not overridden");
     }
 
     public float getMovementSpeed() {
@@ -60,20 +59,12 @@ public abstract class Entity {
         facingAngle = newAngle;
     }
 
-    public float getCurrentPushSpeed() {
-        return currentPushSpeed;
-    }
-
     public float getSizeRadius() {
         return sizeRadius;
     }
 
-    public void setPushAngle(double pushAngle) {
-        this.pushAngle = pushAngle;
-    }
-
-    public void setCurrentPushSpeed(float currentPushSpeed) {
-        this.currentPushSpeed = currentPushSpeed;
+    public void setVelocityMomentum(VelocityMomentum momentum) {
+        this.momentum = momentum;
     }
 
     public abstract void updatePosition(float delta);

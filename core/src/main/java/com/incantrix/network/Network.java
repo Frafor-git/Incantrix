@@ -29,6 +29,7 @@ public class Network {
     public static class UseAbility {
         public long casterId;
         public int abilityId;
+        public float cursorX, cursorY;
     }
 
     public static class UseAbilityConfirm {
@@ -64,8 +65,8 @@ public class Network {
             NetworkEntity networkEntity = new NetworkEntity();
             networkEntity.x = entity.getPosition().x;
             networkEntity.y = entity.getPosition().y;
-            networkEntity.movementAngle = entity.getPushAngle();
-            networkEntity.currentPushSpeed = entity.getCurrentPushSpeed();
+            networkEntity.movementAngle = entity.getVelocityMomentum().angle;
+            networkEntity.currentPushSpeed = entity.getVelocityMomentum().speed;
             networkEntity.facingAngle = entity.getFacingAngle();
             networkEntity.entityType = entity.getType().getValue();
             networkEntity.allegiance = entity.getTeam().getValue();
