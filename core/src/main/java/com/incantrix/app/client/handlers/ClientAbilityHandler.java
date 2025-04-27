@@ -4,7 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.esotericsoftware.kryonet.Client;
 import com.incantrix.core.abilities.AbilityIds;
-import com.incantrix.core.abilities.CooldownTracker;
+import com.incantrix.core.timers.CooldownTracker;
 import com.incantrix.core.enums.GlobalCDType;
 import com.incantrix.network.Network.NetworkEntity;
 import com.incantrix.network.Network.UseAbility;
@@ -18,14 +18,14 @@ public class ClientAbilityHandler {
     }
 
     public static void handleAbilityUsage(NetworkEntity clientPlayer, Client client) {
-        if (Gdx.input.isKeyPressed(Input.Keys.SPACE) && cooldownTracker.isAbilityReady(AbilityIds.FIREBALL_ID)) {
+        if (Gdx.input.isKeyPressed(Input.Keys.SPACE) && cooldownTracker.isReady(AbilityIds.FIREBALL_ID)) {
             UseAbility useAbility = new UseAbility();
             useAbility.abilityId = AbilityIds.FIREBALL_ID;
             useAbility.casterId = clientPlayer.id;
             client.sendTCP(useAbility);
             cooldownTracker.setGcdCooldown(GlobalCDType.INCANTATION);
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.E) && cooldownTracker.isAbilityReady(AbilityIds.HOMING_MISSILE_ID)) {
+        if (Gdx.input.isKeyPressed(Input.Keys.E) && cooldownTracker.isReady(AbilityIds.HOMING_MISSILE_ID)) {
             UseAbility useAbility = new UseAbility();
             useAbility.abilityId = AbilityIds.HOMING_MISSILE_ID;
             useAbility.casterId = clientPlayer.id;
@@ -37,7 +37,7 @@ public class ClientAbilityHandler {
     }
 
     public static void updateAbilityTimer(float delta) {
-        cooldownTracker.updateCooldowns(delta);
+        cooldownTracker.updateTimers(delta);
     }
 
     public static void handleAbilityConfirm(UseAbilityConfirm confirm) {

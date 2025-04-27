@@ -1,5 +1,7 @@
-package com.incantrix.core.abilities;
+package com.incantrix.core.timers;
 
+import com.incantrix.core.abilities.Ability;
+import com.incantrix.core.abilities.AbilityMapper;
 import com.incantrix.core.enums.GlobalCDType;
 
 import java.util.ArrayList;
@@ -7,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class CooldownTracker {
+public class CooldownTracker implements TimeTracker {
     private static final float GCD_INCANTATION_TIME = 0.2f;
     private static final float GCD_MOBILITY_TIME = 0.8f;
     private final Map<Integer, Timer> cooldowns;
@@ -20,7 +22,8 @@ public class CooldownTracker {
         globalMobilityCooldown = new Timer(0);
     }
 
-    public void updateCooldowns(float delta) {
+    @Override
+    public void updateTimers(float delta) {
         if (!globalMobilityCooldown.isReady()) {
             globalMobilityCooldown.decrease(delta);
         }
@@ -40,8 +43,17 @@ public class CooldownTracker {
         toRemove.forEach(cooldowns::remove);
     }
 
-    public void trackCooldown(int id) {
-        cooldowns.put(id, new Timer(AbilityMapper.getAbility(id).getTotalCooldown()));
+    public void trackCooldown(long id) {
+        trackTime((int) id, new Timer(AbilityMapper.getAbility((int) id).getTotalCooldown()));
+    }
+
+    @Override
+    public void trackTime(long id, Timer timer) {
+        cooldowns.put((int) id, timer);
+    }
+
+    public boolean isReady(long id) {
+        return globalCooldownIsReady((int) id) && !cooldowns.containsKey(id);
     }
 
     public void setGcdCooldown(GlobalCDType type) {
@@ -51,10 +63,6 @@ public class CooldownTracker {
         }
     }
 
-    public boolean isAbilityReady(int id) {
-        return globalCooldownIsReady(id) && !cooldowns.containsKey(id);
-    }
-
     public boolean globalCooldownIsReady(int id) {
         Ability ability = AbilityMapper.getAbility(id);
         return switch (ability.getGlobalCDType()) {
@@ -62,25 +70,5 @@ public class CooldownTracker {
             case INCANTATION -> globalIncantationCooldown.isReady();
             case NONE -> true;
         };
-    }
-
-    static class Timer {
-        private float currentTime;
-
-        Timer(float initialTime) {
-            currentTime = initialTime;
-        }
-
-        void decrease(float delta) {
-            currentTime -= delta;
-        }
-
-        boolean isReady() {
-            return currentTime <= 0;
-        }
-
-        void setCurrentTime(float time) {
-            currentTime = time;
-        }
     }
 }

@@ -21,13 +21,13 @@ public class ServerAbilityHandler {
         this.npcEntities = npcEntities;
     }
 
-    public void handleAbilityUsage(UseAbility useAbility, long id) {
+    public void onAbilityUsage(UseAbility useAbility, long id) {
         PlayerEntity caster = clientMapper.getPlayerByEntityId(useAbility.casterId);
         if (caster == null) {
             return;
         }
 
-        if (!clientMapper.getCooldownTracker(caster.getEntityId()).isAbilityReady(useAbility.abilityId)) {
+        if (!clientMapper.getCooldownTracker(caster.getEntityId()).isReady(useAbility.abilityId)) {
             return;
         }
 
@@ -55,6 +55,6 @@ public class ServerAbilityHandler {
     }
 
     public void updateAllCooldowns(float delta) {
-        clientMapper.forEachCooldownTracker(tracker -> tracker.updateCooldowns(delta));
+        clientMapper.forEachCooldownTracker(tracker -> tracker.updateTimers(delta));
     }
 }

@@ -16,13 +16,6 @@ public class VelocityMomentum {
         this.speed = speed;
     }
 
-    public static VelocityMomentum from(VelocityMomentum other, float weight) {
-        VelocityMomentum velocityMomentum = new VelocityMomentum(weight);
-        velocityMomentum.angle = other.angle;
-        velocityMomentum.speed = other.speed;
-        return velocityMomentum;
-    }
-
     public static VelocityMomentum from(VelocityMomentum other) {
         VelocityMomentum velocityMomentum = new VelocityMomentum(other.weight);
         velocityMomentum.angle = other.angle;

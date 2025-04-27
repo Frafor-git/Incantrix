@@ -45,7 +45,6 @@ public class HomingMissileEntity extends OwnedEntity {
 
     @Override
     public void updatePosition(float delta) {
-        System.out.println("1: " + momentum.speed + ", " + momentum.angle);
         if (target != null) {
             Physics.trajectoryModification(
                 position.x,
@@ -57,7 +56,6 @@ public class HomingMissileEntity extends OwnedEntity {
                 delta,
                 Physics.getAdjustmentFactor(0.3f, creationTime));
         }
-        System.out.println("2: " + momentum.speed + ", " + momentum.angle);
         float moveDistance = momentum.speed * delta;
         position.x += (float) (moveDistance * Math.cos(momentum.angle));
         position.y += (float) (moveDistance * Math.sin(momentum.angle));

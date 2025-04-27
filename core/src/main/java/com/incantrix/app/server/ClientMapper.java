@@ -1,7 +1,7 @@
 package com.incantrix.app.server;
 
 import com.esotericsoftware.kryonet.Connection;
-import com.incantrix.core.abilities.CooldownTracker;
+import com.incantrix.core.timers.CooldownTracker;
 import com.incantrix.core.entities.PlayerEntity;
 import com.incantrix.core.enums.Allegiance;
 import com.incantrix.core.utils.Trigonometry;

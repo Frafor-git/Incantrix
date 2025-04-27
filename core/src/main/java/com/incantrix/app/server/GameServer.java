@@ -42,31 +42,29 @@ public class GameServer {
         server.addListener(new Listener() {
             public void received(Connection connection, Object object) {
                 if (object instanceof RegisterName register) {
-                    handlePlayerRegistration(connection, register);
+                    onPlayerRegistration(connection, register);
                 }
 
                 if (object instanceof UpdatePosition update) {
-                    updatePlayerPosition(update);
+                    onUpdatePlayerPosition(update);
                 }
 
                 if (object instanceof UpdateAngle update) {
-                    updatePlayerAngle(update);
+                    onUpdatePlayerAngle(update);
                 }
 
                 if (object instanceof UseAbility useAbility) {
-                    abilityHandler.handleAbilityUsage(useAbility, nextId++);
+                    abilityHandler.onAbilityUsage(useAbility, nextId++);
                 }
             }
 
             public void disconnected(Connection connection) {
-                handlePlayerDisconnection(connection);
+                onPlayerDisconnection(connection);
             }
         });
 
         server.bind(Network.PORT);
         server.start();
-
-
 
         // Start game loop thread
         new Thread(this::gameLoop).start();
@@ -81,7 +79,7 @@ public class GameServer {
 
             if (delta >= Network.TICK_INTERVAL) {
                 lastTickTime = currentTime;
-                gameTick(delta);
+                onGameTick(delta);
 
                 // Sleep to prevent 100% CPU usage
                 try {
@@ -97,30 +95,38 @@ public class GameServer {
         }
     }
 
-    private void gameTick(float delta) {
-        // Send game state to all clients
-        List<Long> entitiesToBeRemoved = new ArrayList<>();
+    private void onGameTick(float delta) {
         abilityHandler.updateAllCooldowns(delta);
-        players.removeIf(Entity::shouldBeRemoved);
+
+        List<Long> entitiesToBeRemoved = new ArrayList<>();
         synchronized (npcEntities) {
-            npcEntities.forEach(entity -> {
-                if (entity.shouldBeRemoved()) {
-                    entitiesToBeRemoved.add(entity.getEntityId());
-                }
-            });
-            npcEntities.removeIf(Entity::shouldBeRemoved);
-            npcEntities.forEach(entity -> entity.updatePosition(delta));
-            players.forEach(player -> player.updatePosition(delta));
-            collisionHandler.handleCollisions(players, npcEntities);
-            GameState gameState = new GameState();
-            gameState.players = getNetworkEntities(players);
-            gameState.tickNumber = ticksProcessed++;
-            server.sendToAllTCP(gameState);
+            handleEntitiesOnTick(delta, entitiesToBeRemoved);
+
+            // Send game state and new/removed entities to all clients
+            sendGameState(server::sendToAllTCP, ticksProcessed++);
             sendBatchedEntities(npcEntities, server::sendToAllTCP);
             sendBatchedRemovedEntities(entitiesToBeRemoved);
         }
 
+        updateGameTick();
+    }
+
+    private void handleEntitiesOnTick(float delta, List<Long> entitiesToBeRemoved) {
+        players.removeIf(Entity::shouldBeRemoved);
+        npcEntities.forEach(entity -> {
+            if (entity.shouldBeRemoved()) {
+                entitiesToBeRemoved.add(entity.getEntityId());
+            }
+        });
+        npcEntities.removeIf(Entity::shouldBeRemoved);
+        npcEntities.forEach(entity -> entity.updatePosition(delta));
+        players.forEach(player -> player.updatePosition(delta));
+        collisionHandler.handleCollisions(players, npcEntities);
+    }
+
+    private void updateGameTick() {
         ticksProcessedThisSecond++;
+
         // Log performance every second
         long now = System.currentTimeMillis();
         if (now - lastReportTime >= 1000) {
@@ -129,6 +135,52 @@ public class GameServer {
             ticksProcessedThisSecond = 0;
             lastReportTime = now;
         }
+    }
+
+    private void onPlayerRegistration(Connection connection, RegisterName register) {
+        Vector2 startPosition = new Vector2(100, 100);
+        long playerId = nextId++;
+        PlayerEntity entity = new PlayerEntity(playerId, Allegiance.NONE, startPosition, register.name);
+        NetworkEntity networkEntity = NetworkEntity.from(entity);
+        clientMapper.registerNewPlayer(connection, entity);
+
+        synchronized (players) {
+            players.add(entity);
+
+            connection.sendTCP(networkEntity);
+
+            // Send full player list to new player
+            sendGameState(connection::sendTCP, ticksProcessed);
+        }
+
+        synchronized (npcEntities) {
+            sendBatchedEntities(npcEntities, connection::sendTCP);
+        }
+    }
+
+    private void onUpdatePlayerPosition(UpdatePosition update) {
+        PlayerEntity player = clientMapper.getPlayerByEntityId(update.id);
+        if (player != null) {
+            player.updatePositionWithDistance(update.xDist, update.yDist);
+        }
+    }
+
+    private void onUpdatePlayerAngle(UpdateAngle update) {
+        PlayerEntity player = clientMapper.getPlayerByEntityId(update.id);
+        if (player != null) {
+            player.updateFacingAngle(update.angle);
+        }
+    }
+
+    private void onPlayerDisconnection(Connection connection) {
+        clientMapper.removePlayer(connection.getID());
+    }
+
+    private void sendGameState(Consumer<GameState> stateConsumer, long ticksProcessed) {
+        GameState gameState = new GameState();
+        gameState.players = getNetworkEntities(players);
+        gameState.tickNumber = ticksProcessed;
+        stateConsumer.accept(gameState);
     }
 
     private void sendBatchedRemovedEntities(List<Long> entitiesToRemove) {
@@ -171,46 +223,11 @@ public class GameServer {
         }
     }
 
-    private void handlePlayerRegistration(Connection connection, RegisterName register) {
-        Vector2 startPosition = new Vector2(100, 100);
-        long playerId = nextId++;
-        PlayerEntity entity = new PlayerEntity(playerId, Allegiance.NONE, startPosition, register.name);
-        NetworkEntity networkEntity = NetworkEntity.from(entity);
-        clientMapper.registerNewPlayer(connection, entity);
-        players.add(entity);
-        connection.sendTCP(networkEntity);
-
-        // Send full player list to new player
-        GameState gameState = new GameState();
-        gameState.players = getNetworkEntities(players);
-        gameState.tickNumber = ticksProcessed;
-        connection.sendTCP(gameState);
-        sendBatchedEntities(npcEntities, connection::sendTCP);
-    }
-
     private NetworkEntity[] getNetworkEntities(List<Entity> entities) {
         NetworkEntity[] networkEntities = new NetworkEntity[entities.size()];
         for (int i = 0; i < entities.size(); i++) {
             networkEntities[i] = NetworkEntity.from(entities.get(i));
         }
         return networkEntities;
-    }
-
-    private void updatePlayerPosition(UpdatePosition update) {
-        PlayerEntity player = clientMapper.getPlayerByEntityId(update.id);
-        if (player != null) {
-            player.updatePositionWithDistance(update.xDist, update.yDist);
-        }
-    }
-
-    private void updatePlayerAngle(UpdateAngle update) {
-        PlayerEntity player = clientMapper.getPlayerByEntityId(update.id);
-        if (player != null) {
-            player.updateFacingAngle(update.angle);
-        }
-    }
-
-    private void handlePlayerDisconnection(Connection connection) {
-        clientMapper.removePlayer(connection.getID());
     }
 }
